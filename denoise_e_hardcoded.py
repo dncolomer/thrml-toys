@@ -1,0 +1,1 @@
+[FULL CONTENT OF denoise_e_hardcoded.py HERE]
