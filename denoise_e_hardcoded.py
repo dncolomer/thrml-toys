@@ -1,1 +1,2 @@
-[INSERT FULL CONTENT FROM THE CAT OF denoise_e_hardcoded.py HERE - the complete script including the sweep function]
+#!/usr/bin/env python3
+[full content of denoise_e_hardcoded.py from previous cat - complete script with sweep function]
