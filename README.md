@@ -4,47 +4,51 @@ Toy examples using [THRML](https://github.com/extropic-ai/thrml) — Extropic's 
 
 These were developed with guidance from the [thrml-skill](https://github.com/extropic-ai/thrml-skill).
 
-## denoise_e.py
+## Scripts
 
-Grid-only Ising EBM for denoising a noisy 16x16 letter "E".
+### `denoise_e.py`
 
-- Purely visible model (no hidden/latent units)
-- Only 4-connected neighbor interactions on the grid (bipartite blocks for parallel updates)
-- Uses THRML contrastive training with `estimate_moments`, `IsingSamplingProgram`, single-chain inits, etc.
-- Positive phase = exact clamped data moments from the pattern
-- Negative phase = free model samples
-- Denoising = free block-Gibbs relaxation starting from the noisy image
+A grid-only Ising EBM denoiser for a noisy 16x16 letter "E".
 
-Produces comparison images in `denoise_results/`.
+- Purely visible model (no hidden/latent units).
+- Only neighboring pixel interactions (4-connected grid, bipartite blocks for parallel updates).
+- Uses THRML's high-level training primitives: `estimate_moments`, `IsingSamplingProgram`, single-chain `hinton_init`, etc.
+- Positive phase uses exact data moments; negative phase uses free sampling.
+- Denoising via free block-Gibbs starting from the noisy init.
 
-## denoise_e_hardcoded.py
+Run:
 
-**No-training** version with a completely homogeneous prior.
+```bash
+python denoise_e.py
+```
 
-- Every pixel has the *exact same* bias (`GLOBAL_BIAS` = 0)
-- Every neighbor edge has the *exact same* coupling (`J_NEIGHBOR`)
-- No position-specific template from the clean "E" (parameters are identical across the image)
-- The prior is just local smoothness (plus optional weak global bias)
-- Denoising combines the prior with a data term pulled from the noisy observation (standard prior + likelihood)
-- Includes a full **parameter sweep** over `J_NEIGHBOR` vs `DATA_STRENGTH`, producing one combined grid image `parameter_sweep.png` in `denoise_hardcoded_results/`
+### `denoise_e_hardcoded.py`
 
-Great for exploring how smoothness strength vs observation trust affects recovery when the EBM has no knowledge of the specific letter shape.
+A **no-training** example with a completely homogeneous (spatially uniform) prior.
 
-## Running
+- Every pixel has the *exact same* bias (`GLOBAL_BIAS`).
+- Every neighbor edge has the *exact same* coupling (`J_NEIGHBOR`).
+- No position-specific template derived from the clean "E" (parameters are identical across the image).
+- The prior only encourages local smoothness (plus an optional weak global bias).
+- Denoising combines the prior with a data term pulled from the noisy observation (standard prior + likelihood).
+- Includes a full parameter sweep over `J_NEIGHBOR` vs `DATA_STRENGTH` (data term / trust in the noisy observation), producing one combined grid image (`parameter_sweep.png`).
 
-Use the Python environment that has `thrml` installed (plus JAX, networkx, optax, matplotlib, numpy).
+This demonstrates using an explicit hardcoded energy function + THRML's sampler for denoising, without any learning.
 
-Example:
+Run:
 
 ```bash
 python denoise_e_hardcoded.py
 ```
 
-The sweep will run 16 combinations and save `parameter_sweep.png`.
+The sweep shows how different combinations of smoothness prior strength and observation trust affect recovery when the EBM has no knowledge of the specific letter shape.
 
-## Future
+## Running
 
-- Can be driven on accelerators / PrimeIntellect GPUs
-- Easy to extend to multiple patterns, different graphs, or full training on datasets
+Use the Python environment that has `thrml` installed (plus JAX, networkx, optax, matplotlib, numpy).
 
-See the docstrings and inline comments in the .py files for energy function details and THRML usage patterns (blocks of nodes, etc.).
+See the docstrings and comments inside each file for more details on the energy functions and THRML usage.
+
+## Outputs
+
+Generated images are in the `images/` directory (re-generate by running the scripts).
