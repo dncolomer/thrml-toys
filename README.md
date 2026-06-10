@@ -1,49 +1,50 @@
 # thrml-toys
 
-Toy examples using [THRML](https://github.com/extropic-ai/thrml) — Extropic's JAX-based simulator for block Gibbs sampling and Ising / Boltzmann machines.
+Toy examples using [THRML](https://github.com/extropic-ai/thrml) — Extropic's JAX-based simulator for block Gibbs sampling and Ising/Boltzmann machines.
 
-## Scripts
+These were developed with guidance from the [thrml-skill](https://github.com/extropic-ai/thrml-skill).
 
-### `denoise_e.py`
+## denoise_e.py
 
-A grid-only Ising EBM denoiser for a noisy 16x16 letter "E".
+Grid-only Ising EBM for denoising a noisy 16x16 letter "E".
 
-- Purely visible model (no hidden units).
-- Only neighboring pixel interactions (4-connected grid, bipartite blocks).
-- Uses THRML's high-level training primitives: `estimate_moments`, `IsingSamplingProgram`, single-chain `hinton_init`, etc.
-- Positive phase uses exact data moments; negative phase uses free sampling.
-- Denoising via free block-Gibbs starting from the noisy init.
+- Purely visible model (no hidden/latent units)
+- Only 4-connected neighbor interactions on the grid (bipartite blocks for parallel updates)
+- Uses THRML contrastive training with `estimate_moments`, `IsingSamplingProgram`, single-chain inits, etc.
+- Positive phase = exact clamped data moments from the pattern
+- Negative phase = free model samples
+- Denoising = free block-Gibbs relaxation starting from the noisy image
 
-Run:
+Produces comparison images in `denoise_results/`.
 
-```bash
-python denoise_e.py
-```
+## denoise_e_hardcoded.py
 
-### `denoise_e_hardcoded.py`
+**No-training** version with a completely homogeneous prior.
 
-A **no-training** example with a completely homogeneous (spatially uniform) prior.
+- Every pixel has the *exact same* bias (`GLOBAL_BIAS` = 0)
+- Every neighbor edge has the *exact same* coupling (`J_NEIGHBOR`)
+- No position-specific template from the clean "E" (parameters are identical across the image)
+- The prior is just local smoothness (plus optional weak global bias)
+- Denoising combines the prior with a data term pulled from the noisy observation (standard prior + likelihood)
+- Includes a full **parameter sweep** over `J_NEIGHBOR` vs `DATA_STRENGTH`, producing one combined grid image `parameter_sweep.png` in `denoise_hardcoded_results/`
 
-- Every pixel has the **exact same bias** (`GLOBAL_BIAS`).
-- Every neighbor edge has the **exact same coupling** (`J_NEIGHBOR`).
-- No position-specific template derived from the clean "E".
-- The prior only encourages local smoothness (plus an optional weak global bias).
-- Includes a full parameter sweep over `J_NEIGHBOR` vs `DATA_STRENGTH` (data term / trust in the noisy observation), producing one combined grid image (`parameter_sweep.png`).
+Great for exploring how smoothness strength vs observation trust affects recovery when the EBM has no knowledge of the specific letter shape.
 
-This demonstrates using an explicit hardcoded energy function + THRML's sampler for denoising, without any learning.
+## Running
 
-Run:
+Use the Python environment that has `thrml` installed (plus JAX, networkx, optax, matplotlib, numpy).
+
+Example:
 
 ```bash
 python denoise_e_hardcoded.py
 ```
 
-The sweep shows how different combinations of smoothness prior strength and observation trust affect recovery.
+The sweep will run 16 combinations and save `parameter_sweep.png`.
 
-## Notes
+## Future
 
-- These were developed while using the [thrml-skill](https://github.com/extropic-ai/thrml-skill) for correct THRML idioms (blocks of nodes, bipartite coloring for grids, carry node identities, etc.).
-- CPU only for now (easy to move to accelerators / PrimeIntellect later).
-- Requires: `thrml`, `jax`, `networkx`, `optax`, `matplotlib`, `numpy`.
+- Can be driven on accelerators / PrimeIntellect GPUs
+- Easy to extend to multiple patterns, different graphs, or full training on datasets
 
-See the docstrings and comments inside each file for more details on the energy functions and THRML usage.
+See the docstrings and inline comments in the .py files for energy function details and THRML usage patterns (blocks of nodes, etc.).
